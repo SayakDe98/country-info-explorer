@@ -4,14 +4,14 @@
   <div class="content">
     <SkeletonLoader :loading="loading" />
     <v-card flat v-if="!loading">
-  <v-dialog v-model="countryDetailsDialogOpen" max-width="1000px">
-      <CountryDetailsDialog
-        :selectedCountry="selectedCountry"
-        :mapSrc="mapSrc"
-        :countryDetailsDialogOpen="countryDetailsDialogOpen"
-        @countryDetailsDialogOpen="handleCountryDetailsDialogClose"
-      />
-</v-dialog>
+      <v-dialog v-model="countryDetailsDialogOpen" max-width="1000px">
+        <CountryDetailsDialog
+          :selectedCountry="selectedCountry"
+          :mapSrc="mapSrc"
+          :countryDetailsDialogOpen="countryDetailsDialogOpen"
+          @countryDetailsDialogOpen="handleCountryDetailsDialogClose"
+        />
+      </v-dialog>
       <div class="info-search-and-csv-export-container">
         <div>
           <h2 style="color: #ff5722">Country Information Explorer</h2>
@@ -194,10 +194,8 @@ export default {
             officialName: country?.name?.official,
             subregion: country?.subregion,
             borders: country?.borders,
-            maps: {
-              openStreetMap: country?.maps?.openStreetMaps,
-              googleMap: country?.maps?.googleMaps,
-            },
+            lat: this.getLatitudeLongitude(country?.latlng, "lat"),
+            lng: this.getLatitudeLongitude(country?.latlng, "lng"),
           },
         }));
       } catch (error) {
@@ -250,31 +248,9 @@ export default {
       );
       country.borders = borderCountryNames;
       this.selectedCountry = country;
-      await this.extractGeoCoordinatesFromOSMLink(
-        this.selectedCountry.maps.openStreetMap
-      );
+      this.center = { lat: country.lat, lng: country.lng };
       this.mapDataLoading = false;
       this.countryDetailsDialogOpen = true;
-    },
-    async extractGeoCoordinatesFromOSMLink(osmLink) {
-      try {
-        const relationId = osmLink?.split("/relation")[1];
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_OPEN_STREET_BASE_URI
-          }/0.6/relation${relationId}/full.json`
-        );
-        const data = await response.json();
-        const nodes = data.elements.filter(
-          (element) => element.type === "node"
-        );
-        this.center = this.calculateCenter(nodes);
-      } catch (error) {
-        console.error(
-          "An Error encountered when fetching current country coordinates: ",
-          error
-        );
-      }
     },
     async fetchBorderCountryName(codes) {
       try {
@@ -332,19 +308,6 @@ export default {
       const csvRows = [headerRow, ...rows.map((row) => row.join(","))];
       return csvRows.join("\n");
     },
-    calculateCenter(nodes) {
-      let totalLatitude = 0;
-      let totalLongitude = 0;
-      nodes.forEach((node) => {
-        totalLatitude += node?.lat;
-        totalLongitude += node?.lon;
-      });
-      const totalNodes = nodes?.length;
-      return {
-        lat: totalLatitude / totalNodes,
-        lng: totalLongitude / totalNodes,
-      };
-    },
     updateMapUrl() {
       this.mapSrc = `${import.meta.env.VITE_GOOGLE_MAPS_BASE_URI}?q=${
         this.center.lat
@@ -361,7 +324,7 @@ export default {
     },
     handleCountryDetailsDialogClose(value) {
       this.countryDetailsDialogOpen = value;
-    }
+    },
   },
   async mounted() {
     this.fetchCountries();

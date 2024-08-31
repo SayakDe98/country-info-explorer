@@ -36,9 +36,7 @@ export default defineConfig({
       VITE_GOOGLE_MAPS_BASE_URI:
         dotenv.config().parsed.VITE_GOOGLE_MAPS_BASE_URI,
       VITE_REST_COUNTRIES_BASE_URI:
-        dotenv.config().parsed.VITE_REST_COUNTRIES_BASE_URI,
-      VITE_OPEN_STREET_BASE_URI:
-        dotenv.config().parsed.VITE_OPEN_STREET_BASE_URI,
+        dotenv.config().parsed.VITE_REST_COUNTRIES_BASE_URI
     },
   },
   resolve: {
