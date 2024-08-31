@@ -1,76 +1,17 @@
 <template>
   <v-overlay v-model="mapDataLoading"> </v-overlay>
-  <v-progress-circular
-    color="#ff5722"
-    indeterminate
-    :size="60"
-    :width="6"
-    :v-if="mapDataLoading"
-    :style="{
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      zIndex: '999',
-      display: mapDataLoading ? 'block' : 'none',
-    }"
-  ></v-progress-circular>
+  <CircularLoader :mapDataLoading="mapDataLoading" />
   <div class="content">
-    <v-skeleton-loader
-      boilerplate
-      type="table"
-      v-if="loading"
-    ></v-skeleton-loader>
+    <SkeletonLoader :loading="loading" />
     <v-card flat v-if="!loading">
-      <v-dialog v-model="countryDetailsDialogOpen" max-width="1000px">
-        <v-card>
-          <v-card-title><h4>Country Details</h4></v-card-title>
-          <v-card-text class="card-text-container">
-            <div><b>Subregion:</b> {{ selectedCountry?.subregion || "-" }}</div>
-            <div>
-              <b>UN Member:</b>
-              {{ selectedCountry?.unMembership === true ? "Yes" : "No" }}
-            </div>
-            <div>
-              <b>Official Name:</b> {{ selectedCountry?.officialName || "-" }}
-            </div>
-            <div>
-              <div v-if="selectedCountry?.borders?.length">
-                <b>Bordering Countries:</b>
-                <v-chip
-                  v-for="(border, index) in selectedCountry.borders"
-                  :key="index"
-                  color="#ff5722"
-                  variant="flat"
-                  class="ma-1"
-                >
-                  {{ border }}
-                </v-chip>
-              </div>
-            </div>
-          </v-card-text>
-          <div class="map">
-            <b>Explore the Country:</b>
-            <iframe
-              v-if="countryDetailsDialogOpen"
-              :src="mapSrc"
-              width="100%"
-              style="border: 0"
-              height="400"
-              loading="lazy"
-              allowfullscreen=""
-            ></iframe>
-          </div>
-
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              text="Close"
-              color="red"
-              @click="countryDetailsDialogOpen = false"
-            ></v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+  <v-dialog v-model="countryDetailsDialogOpen" max-width="1000px">
+      <CountryDetailsDialog
+        :selectedCountry="selectedCountry"
+        :mapSrc="mapSrc"
+        :countryDetailsDialogOpen="countryDetailsDialogOpen"
+        @countryDetailsDialogOpen="handleCountryDetailsDialogClose"
+      />
+</v-dialog>
       <div class="info-search-and-csv-export-container">
         <div>
           <h2 style="color: #ff5722">Country Information Explorer</h2>
@@ -169,8 +110,17 @@
 </template>
 
 <script>
+import CircularLoader from "./CircularLoader.vue";
+import SkeletonLoader from "./SkeletonLoader.vue";
+import CountryDetailsDialog from "./CountryDetailsDialog.vue";
+
 export default {
   name: "AdminDashboard",
+  components: {
+    CircularLoader,
+    SkeletonLoader,
+    CountryDetailsDialog,
+  },
   data() {
     return {
       mapDataLoading: false,
@@ -409,6 +359,9 @@ export default {
     handleCurrentPage(page) {
       this.currentPage = page;
     },
+    handleCountryDetailsDialogClose(value) {
+      this.countryDetailsDialogOpen = value;
+    }
   },
   async mounted() {
     this.fetchCountries();
@@ -433,16 +386,8 @@ html {
 .content {
   padding: 5rem;
 }
-.card-text-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
 .mdi-map-marker {
   color: red !important;
-}
-.map {
-  padding: 1.5rem;
 }
 .v-card-title {
   color: #ff5722;
